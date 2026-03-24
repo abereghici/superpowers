@@ -7,15 +7,17 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 ## Overview
 
-Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+Write implementation plans as bite-sized tasks with contracts and acceptance criteria. Document which files to touch, what interfaces to implement, and how to verify success — but leave the actual code to the executor and TDD skill. DRY. YAGNI. TDD. Frequent commits.
 
-Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
+Assume the executor is a skilled developer who will use `superpowers:test-driven-development` for implementation. Give them clear contracts and acceptance criteria, not code to copy-paste.
 
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
 **Context:** This should be run in a dedicated worktree (created by brainstorming skill).
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>/` (directory)
+- `overview.md` — header, goal, architecture, tech stack, task index
+- `task-NN.md` — one file per task with contract and acceptance criteria
 - (User preferences for plan location override this default)
 
 ## Scope Check
@@ -44,7 +46,7 @@ This structure informs the task decomposition. Each task should produce self-con
 
 ## Plan Document Header
 
-**Every plan MUST start with this header:**
+**Every plan overview.md MUST start with this header:**
 
 ```markdown
 # [Feature Name] Implementation Plan
@@ -57,56 +59,55 @@ This structure informs the task decomposition. Each task should produce self-con
 
 **Tech Stack:** [Key technologies/libraries]
 
+## Tasks
+
+- [ ] [Task 1: Component Name](task-01.md)
+- [ ] [Task 2: Component Name](task-02.md)
+- ...
+
 ---
 ```
 
 ## Task Structure
 
+Each task is a separate file (`task-NN.md`) containing contracts and acceptance criteria — not implementation code. The executor uses `superpowers:test-driven-development` for the RED-GREEN-REFACTOR cycle.
+
 ````markdown
 ### Task N: [Component Name]
+
+**Why:** [What this task accomplishes and how it fits the architecture]
 
 **Files:**
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
 
-- [ ] **Step 1: Write the failing test**
+**Contract:**
+- `function_name(param: Type) -> ReturnType` — [what it does]
+- Interface/type shapes (signatures, not bodies)
 
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
-```
+**Acceptance Criteria:**
+- [ ] [Observable behavior that proves it works]
+- [ ] [Edge case or error condition handled]
+- [ ] [Integration point verified]
 
-- [ ] **Step 2: Run test to verify it fails**
+**Constraints:**
+- [Dependencies on other tasks or external systems]
+- [Performance or compatibility requirements]
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
-
-- [ ] **Step 3: Write minimal implementation**
-
-```python
-def function(input):
-    return expected
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: PASS
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature"
-```
+**Test guidance:** Use superpowers:test-driven-development. Feature/bugfix tasks MUST follow RED-GREEN-REFACTOR.
 ````
+
+**What NOT to include in tasks:**
+- Function bodies or implementation code (the executor writes this via TDD)
+- Complete test files (the executor writes tests first per TDD skill)
+- Shell commands for running tests (the executor knows their test runner)
+- TDD step sequences (the TDD skill already enforces this)
+- Commit messages (the executor crafts these from context)
 
 ## Remember
 - Exact file paths always
-- Complete code in plan (not "add validation")
-- Exact commands with expected output
+- Contracts and acceptance criteria, not implementation code
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
 
@@ -121,14 +122,14 @@ After writing the complete plan:
 
 **Review loop guidance:**
 - Same agent that wrote the plan fixes it (preserves context)
-- If loop exceeds 3 iterations, surface to human for guidance
+- If loop exceeds 2 iterations, surface to human for guidance — a third automated pass rarely resolves what two couldn't
 - Reviewers are advisory — explain disagreements if you believe feedback is incorrect
 
 ## Execution Handoff
 
 After saving the plan, offer execution choice:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**"Plan complete and saved to `docs/superpowers/plans/<feature-name>/`. Two execution options:**
 
 **1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
 
