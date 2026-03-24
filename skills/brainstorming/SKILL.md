@@ -21,13 +21,13 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
-1. **Explore project context** — check files, docs, recent commits
+1. **Explore project context** — read CLAUDE.md (if present), existing specs in docs/superpowers/specs/, project memory, and recent git log. Only ask questions whose answers aren't already in these sources.
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
-7. **Spec review loop** — dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+7. **Spec review** — For simple specs (single concept, under ~500 words): self-review against the spec-document-reviewer checklist inline. For complex specs (multiple sections, cross-cutting concerns): dispatch spec-document-reviewer subagent with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 2 iterations, then surface to human).
 8. **User reviews written spec** — ask user to review the spec file before proceeding
 9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
@@ -43,7 +43,9 @@ digraph brainstorming {
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
     "Write design doc" [shape=box];
-    "Spec review loop" [shape=box];
+    "Simple spec?\n(single concept, <500 words)" [shape=diamond];
+    "Self-review inline" [shape=box];
+    "Dispatch spec-document-reviewer\nsubagent (max 2 iterations)" [shape=box];
     "Spec review passed?" [shape=diamond];
     "User reviews spec?" [shape=diamond];
     "Invoke writing-plans skill" [shape=doublecircle];
@@ -57,9 +59,12 @@ digraph brainstorming {
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
     "User approves design?" -> "Write design doc" [label="yes"];
-    "Write design doc" -> "Spec review loop";
-    "Spec review loop" -> "Spec review passed?";
-    "Spec review passed?" -> "Spec review loop" [label="issues found,\nfix and re-dispatch"];
+    "Write design doc" -> "Simple spec?\n(single concept, <500 words)";
+    "Simple spec?\n(single concept, <500 words)" -> "Self-review inline" [label="yes"];
+    "Simple spec?\n(single concept, <500 words)" -> "Dispatch spec-document-reviewer\nsubagent (max 2 iterations)" [label="no"];
+    "Self-review inline" -> "Spec review passed?";
+    "Dispatch spec-document-reviewer\nsubagent (max 2 iterations)" -> "Spec review passed?";
+    "Spec review passed?" -> "Dispatch spec-document-reviewer\nsubagent (max 2 iterations)" [label="issues found,\nfix and re-dispatch"];
     "Spec review passed?" -> "User reviews spec?" [label="approved"];
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
     "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
@@ -77,7 +82,7 @@ digraph brainstorming {
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
-- Only one question per message - if a topic needs more exploration, break it into multiple questions
+- Prefer one question per message. When 2-3 questions are tightly related (e.g., all about the same subsystem or constraint), batch them in one message to reduce round-trips. Never more than 3 per message.
 - Focus on understanding: purpose, constraints, success criteria
 
 **Exploring approaches:**
@@ -116,12 +121,11 @@ digraph brainstorming {
 - Use elements-of-style:writing-clearly-and-concisely skill if available
 - Commit the design document to git
 
-**Spec Review Loop:**
+**Spec Review:**
 After writing the spec document:
 
-1. Dispatch spec-document-reviewer subagent (see spec-document-reviewer-prompt.md)
-2. If Issues Found: fix, re-dispatch, repeat until Approved
-3. If loop exceeds 3 iterations, surface to human for guidance
+- **Simple specs** (single concept, under ~500 words): self-review against the spec-document-reviewer checklist (see spec-document-reviewer-prompt.md) inline. No subagent needed.
+- **Complex specs** (multiple sections, cross-cutting concerns): dispatch spec-document-reviewer subagent (see spec-document-reviewer-prompt.md). If Issues Found: fix, re-dispatch, repeat until Approved. Max 2 iterations, then surface to human for guidance.
 
 **User Review Gate:**
 After the spec review loop passes, ask the user to review the written spec before proceeding:
@@ -137,7 +141,7 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 ## Key Principles
 
-- **One question at a time** - Don't overwhelm with multiple questions
+- **One question at a time** - Prefer single questions; batch 2-3 only when tightly related
 - **Multiple choice preferred** - Easier to answer than open-ended when possible
 - **YAGNI ruthlessly** - Remove unnecessary features from all designs
 - **Explore alternatives** - Always propose 2-3 approaches before settling
